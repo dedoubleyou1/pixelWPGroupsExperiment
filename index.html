@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <style>
+      #bg-canvas,
+      #grid-canvas {
+        width: 512px;
+        height: 512px;
+        image-rendering: pixelated;
+      }
+
+      #bg-canvas,
+      #grid-canvas,
+      #overlay-canvas {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="bg-canvas" width="16" height="16"></canvas>
+    <canvas id="grid-canvas" width="16" height="16"></canvas>
+    <canvas id="overlay-canvas" width="512" height="512"></canvas>
+  </body>
+  <script type="module" src="setup.js"></script>
+</html>
