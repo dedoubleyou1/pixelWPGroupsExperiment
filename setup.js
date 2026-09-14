@@ -9,10 +9,10 @@ const dragHandleState = {
 };
 
 const handlePoints = [
-  { x: 1, y: 1 },
-  { x: 2, y: 1 },
-  { x: 2, y: 2 },
-  { x: 1, y: 2 },
+  { x: 5, y: 5 },
+  { x: 11, y: 5 },
+  { x: 11, y: 11 },
+  { x: 5, y: 11 },
 ];
 
 const GRID_SIZE = 512 / 16;
@@ -74,7 +74,13 @@ function drawPolygon(ctx) {
 }
 
 function drawPolygonFill(ctx) {
-  scanlineFillPolygon(ctx, handlePoints, "white");
+  const absPoints = handlePoints.map((point) => {
+    return {
+      x: Math.round(point.x),
+      y: Math.round(point.y),
+    };
+  });
+  scanlineFillPolygon(ctx, absPoints, "white");
 }
 
 function getPointerOffset(event, canvas) {
