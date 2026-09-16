@@ -1,4 +1,10 @@
-import { scanlineFillPolygon } from "./helpers.js";
+import {
+  drawCheckerboard,
+  drawHandle,
+  scanlineFillPolygon,
+} from "./helpers.js";
+
+const GRID_SIZE = 512 / 16;
 
 const dragHandleState = {
   isDragging: false,
@@ -14,48 +20,6 @@ const handlePoints = [
   { x: 11, y: 11 },
   { x: 5, y: 11 },
 ];
-
-const GRID_SIZE = 512 / 16;
-
-function drawCheckerboard(ctx, width, height) {
-  const imageData = ctx.createImageData(width, height);
-  const data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    const index = i / 4;
-    const xPos = index % width;
-    const yPos = Math.floor(index / width);
-
-    if (xPos % 2 === yPos % 2) {
-      data[i] = 111; // red
-      data[i + 1] = 111; // green
-      data[i + 2] = 111; // blue
-      data[i + 3] = 255; // alpha
-    } else {
-      data[i] = 143; // red
-      data[i + 1] = 143; // green
-      data[i + 2] = 143; // blue
-      data[i + 3] = 255; // alpha
-    }
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-}
-
-function drawHandle(ctx, x, y) {
-  const handleWidth = 8;
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, handleWidth, 0, Math.PI * 2, true);
-  ctx.closePath();
-
-  ctx.fillStyle = "white";
-  ctx.fill();
-
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "black";
-  ctx.stroke();
-  ctx.restore();
-}
 
 function drawPolygon(ctx) {
   ctx.save();
@@ -122,8 +86,6 @@ function init() {
   const overlayCanvas = document.getElementById("overlay-canvas");
   const overlayCtx = overlayCanvas.getContext("2d");
 
-  drawCheckerboard(bgCtx, bgCanvas.width, bgCanvas.height);
-
   overlayCanvas.addEventListener("pointerdown", (event) => {
     const offsetPoint = getPointerOffset(event, overlayCanvas);
 
@@ -175,6 +137,7 @@ function init() {
     requestAnimationFrame(update);
   }
 
+  drawCheckerboard(bgCtx, bgCanvas.width, bgCanvas.height);
   requestAnimationFrame(update);
 }
 
