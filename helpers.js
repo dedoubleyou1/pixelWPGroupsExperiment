@@ -38,6 +38,11 @@ export function drawHandle(ctx, x, y) {
   ctx.restore();
 }
 
+export function snapHandle(handle) {
+  handle.x = Math.round(handle.x);
+  handle.y = Math.round(handle.y);
+}
+
 // NOTE: The following helpers were written with assistance from AI
 
 /**

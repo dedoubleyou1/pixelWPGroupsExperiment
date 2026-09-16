@@ -1,6 +1,7 @@
 import {
   drawCheckerboard,
   drawHandle,
+  snapHandle,
   scanlineFillPolygon,
 } from "./helpers.js";
 
@@ -69,11 +70,6 @@ function findHandleInRange(targetX, targetY, handles) {
     const yDistSquared = (targetY - handleCanvasY) ** 2;
     return xDistSquared + yDistSquared < rangeSquared;
   });
-}
-
-function snapHandle(handle) {
-  handle.x = Math.round(handle.x);
-  handle.y = Math.round(handle.y);
 }
 
 function init() {
