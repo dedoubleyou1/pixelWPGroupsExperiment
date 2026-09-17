@@ -3,16 +3,16 @@ import {
   drawHandle,
   snapHandle,
   scanlineFillPolygon,
+  getClosestPointOnSegmentWithinDistance,
 } from "./helpers.js";
 
 const GRID_SIZE = 512 / 16;
 
-const dragHandleState = {
+const dragState = {
   isDragging: false,
-  dragType: null, // "handle" or "segment"
-  dragTargetIndex: null,
-  dragTargetOrigin: { x: 0, y: 0 },
-  dragCanvasOffset: { x: 0, y: 0 },
+  dragTargets: [],
+  dragTargetOrigins: [],
+  dragOffsets: [],
 };
 
 const handlePoints = [
@@ -61,15 +61,68 @@ function drawHandles(ctx, handles) {
   }
 }
 
-function findHandleInRange(targetX, targetY, handles) {
+function findDropTargetInRange(targetX, targetY, handles) {
   const rangeSquared = (GRID_SIZE / 2) ** 2;
-  return handles.findIndex((handle) => {
+  const foundHandle = handles.findIndex((handle, index) => {
     const handleCanvasX = handle.x * GRID_SIZE;
     const handleCanvasY = handle.y * GRID_SIZE;
     const xDistSquared = (targetX - handleCanvasX) ** 2;
     const yDistSquared = (targetY - handleCanvasY) ** 2;
-    return xDistSquared + yDistSquared < rangeSquared;
+    const handleInRange = xDistSquared + yDistSquared < rangeSquared;
+    dragState.isDragging = handleInRange;
+    if (dragState.isDragging) {
+      dragState.dragTargets[0] = index;
+      dragState.dragTargetOrigins[0] = {
+        x: handlePoints[index].x,
+        y: handlePoints[index].y,
+      };
+      dragState.dragOffsets[0] = {
+        x: 0,
+        y: 0,
+      };
+    }
+    console.log(handleInRange);
+    return handleInRange;
   });
+
+  if (foundHandle === -1) {
+    handles.findIndex((handle, index) => {
+      const endHandle = (index + 1) % handles.length;
+      const pixelX = targetX / GRID_SIZE;
+      const pixelY = targetY / GRID_SIZE;
+
+      const dragOffset = getClosestPointOnSegmentWithinDistance(
+        { x: pixelX, y: pixelY },
+        handle,
+        handles[endHandle],
+        0.5,
+      );
+
+      dragState.isDragging = !!dragOffset;
+
+      if (dragState.isDragging) {
+        dragState.dragTargets[0] = index;
+        dragState.dragTargets[1] = endHandle;
+        dragState.dragTargetOrigins[0] = {
+          x: handlePoints[index].x,
+          y: handlePoints[index].y,
+        };
+        dragState.dragOffsets[0] = {
+          x: dragOffset.x - handlePoints[index].x,
+          y: dragOffset.y - handlePoints[index].y,
+        };
+        dragState.dragTargetOrigins[1] = {
+          x: handlePoints[endHandle].x,
+          y: handlePoints[endHandle].y,
+        };
+        dragState.dragOffsets[1] = {
+          x: dragOffset.x - handlePoints[endHandle].x,
+          y: dragOffset.y - handlePoints[endHandle].y,
+        };
+      }
+      return dragState.isDragging;
+    });
+  }
 }
 
 function init() {
@@ -85,34 +138,35 @@ function init() {
   overlayCanvas.addEventListener("pointerdown", (event) => {
     const offsetPoint = getPointerOffset(event, overlayCanvas);
 
-    const handleIndex = findHandleInRange(
+    const handleIndex = findDropTargetInRange(
       offsetPoint.x,
       offsetPoint.y,
       handlePoints,
     );
-
-    dragHandleState.isDragging = handleIndex >= 0;
-    if (dragHandleState.isDragging) {
-      dragHandleState.dragTargetIndex = handleIndex;
-      dragHandleState.dragTargetOrigin.x = handlePoints[handleIndex].x;
-      dragHandleState.dragTargetOrigin.y = handlePoints[handleIndex].y;
-    }
   });
 
   overlayCanvas.addEventListener("pointermove", (event) => {
-    if (dragHandleState.isDragging) {
+    if (dragState.isDragging) {
       const offsetPoint = getPointerOffset(event, overlayCanvas);
-      const dragHandle = handlePoints[dragHandleState.dragTargetIndex];
-      dragHandle.x = offsetPoint.x / GRID_SIZE;
-      dragHandle.y = offsetPoint.y / GRID_SIZE;
+      dragState.dragTargets.forEach((dragHandleIndex, targetIndex) => {
+        const dragHandle = handlePoints[dragHandleIndex];
+        dragHandle.x =
+          offsetPoint.x / GRID_SIZE - dragState.dragOffsets[targetIndex].x;
+        dragHandle.y =
+          offsetPoint.y / GRID_SIZE - dragState.dragOffsets[targetIndex].y;
+      });
     }
   });
 
   overlayCanvas.addEventListener("pointerup", (event) => {
-    if (dragHandleState.isDragging) {
-      dragHandleState.isDragging = false;
-      console.log(handlePoints[dragHandleState.dragTargetIndex]);
-      snapHandle(handlePoints[dragHandleState.dragTargetIndex]);
+    if (dragState.isDragging) {
+      dragState.dragTargets.forEach((dragHandleIndex, targetIndex) => {
+        snapHandle(handlePoints[dragHandleIndex]);
+      });
+      dragState.isDragging = false;
+      dragState.dragTargets = [];
+      dragState.dragTargetOrigins = [];
+      dragState.dragOffsets = [];
     }
   });
 
